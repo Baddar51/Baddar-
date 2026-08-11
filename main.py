@@ -1,7 +1,7 @@
 import os
 import requests
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -24,17 +24,16 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     }
 
-    response = requests.post(url, json=payload)
-    data = response.json()
-
     try:
+        response = requests.post(url, json=payload)
+        data = response.json()
         reply = data["candidates"][0]["content"]["parts"][0]["text"]
-    except:
-        reply = "Error getting response."
+    except Exception as e:
+        reply = f"Error: {e}"
 
     await update.message.reply_text(reply)
 
-app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+app = Application.builder().token(TELEGRAM_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
